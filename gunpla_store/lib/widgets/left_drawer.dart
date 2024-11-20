@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:gunpla_store/screens/gunplaentry_form.dart';
 import 'package:gunpla_store/screens/menu.dart';
+import 'package:gunpla_store/screens/list_gunplaentry.dart';
 
 class LeftDrawer extends StatelessWidget {
   const LeftDrawer({super.key});
@@ -62,6 +63,17 @@ class LeftDrawer extends StatelessWidget {
                 ));
               },
             ),
+            ListTile(
+              leading: const Icon(Icons.add_reaction_rounded),
+              title: const Text('Daftar Gunpla'),
+              onTap: () {
+                  // Route menu ke halaman mood
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const GunplaEntryPage()),
+                  );
+              },
+          ),
         ],
       ),
     );

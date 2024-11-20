@@ -1,5 +1,10 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:gunpla_store/screens/menu.dart';
 import 'package:gunpla_store/widgets/left_drawer.dart';
+import 'package:pbp_django_auth/pbp_django_auth.dart';
+import 'package:provider/provider.dart';
 
 class GunplaEntryFormPage extends StatefulWidget {
   const GunplaEntryFormPage({super.key});
@@ -14,11 +19,12 @@ class _GunplaEntryFormPageState extends State<GunplaEntryFormPage> {
 	int _price = 0;
 	String _description = "";
   String _sizeRatio = "";
-  String _extentions = "";
+  String _extensions = "";
   String _notes = "";
 
   @override
   Widget build(BuildContext context) {
+    final request = context.watch<CookieRequest>();
     return Scaffold(
       appBar: AppBar(
         title: const Center(
@@ -143,7 +149,7 @@ class _GunplaEntryFormPageState extends State<GunplaEntryFormPage> {
                   ),
                   onChanged: (String? value) {
                     setState(() {
-                      _extentions = value!;
+                      _extensions = value!;
                     });
                   },
                   validator: (String? value) {
@@ -186,39 +192,41 @@ class _GunplaEntryFormPageState extends State<GunplaEntryFormPage> {
                       backgroundColor: WidgetStateProperty.all(
                           Theme.of(context).colorScheme.primary),
                     ),
-                    onPressed: () {
-                      if (_formKey.currentState!.validate()) {
-                        showDialog(
-                          context: context,
-                          builder: (context) {
-                            return AlertDialog(
-                              title: const Text('Mood berhasil tersimpan'),
-                              content: SingleChildScrollView(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text('Nama: $_name'),
-                                    Text('Harga: $_price'),
-                                    Text('Desripsi: $_description'),
-                                    Text('Rasio: $_sizeRatio'),
-                                    Text('Ekstensi: $_extentions'),
-                                    Text('Notes: $_notes'),
-                                  ],
-                                ),
-                              ),
-                              actions: [
-                                TextButton(
-                                  child: const Text('OK'),
-                                  onPressed: () {
-                                    Navigator.pop(context);
-                                    _formKey.currentState!.reset();
-                                  },
-                                ),
-                              ],
+                    onPressed: () async {
+                        if (_formKey.currentState!.validate()) {
+                            // Kirim ke Django dan tunggu respons
+                            // TODO: Ganti URL dan jangan lupa tambahkan trailing slash (/) di akhir URL!
+                            final response = await request.postJson(
+                                "http://127.0.0.1:8000/create-flutter/",
+                                jsonEncode(<String, String>{
+                                    'name': _name,
+                                    'price': _price.toString(),
+                                    'description': _description,
+                                    'size_ratio': _sizeRatio,
+                                    'extensions': _extensions,
+                                    'notes': _notes,
+                                // TODO: Sesuaikan field data sesuai dengan aplikasimu
+                                }),
                             );
-                          },
-                        );
-                      }
+                            if (context.mounted) {
+                                if (response['status'] == 'success') {
+                                    ScaffoldMessenger.of(context)
+                                        .showSnackBar(const SnackBar(
+                                    content: Text("Gunpla baru berhasil disimpan!"),
+                                    ));
+                                    Navigator.pushReplacement(
+                                        context,
+                                        MaterialPageRoute(builder: (context) => MyHomePage()),
+                                    );
+                                } else {
+                                    ScaffoldMessenger.of(context)
+                                        .showSnackBar(const SnackBar(
+                                        content:
+                                            Text("Terdapat kesalahan, silakan coba lagi."),
+                                    ));
+                                }
+                            }
+                        }
                     },
                     child: const Text(
                       "Save",
